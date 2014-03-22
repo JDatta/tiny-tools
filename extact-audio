@@ -1,0 +1,44 @@
+#!/bin/bash
+
+ECHO="echo"
+FIND="find"
+REV="rev"
+CUT="cut"
+CAT="cat"
+FFMPEG="ffmpeg"
+EXEC="exec"
+PATTERN=$1
+UNIQUE="${RANDOM}_`date +%s`"
+ERR=/tmp/err_${UNIQUE}
+OUT=/tmp/out_${UNIQUE}
+IFS=$(${ECHO} -en "\n\b") # Set the field separator newline
+
+if [[ $# == 0 ]]; then
+    ${ECHO} "Usage:"
+    ${ECHO} "-------------"
+    ${ECHO} "extractAudio <source file name pattern>"
+    ${ECHO} ""
+    exit
+fi
+
+${ECHO}
+for f in `${FIND} -iname $PATTERN`
+do
+    target="`${ECHO} ${f}|${REV}|${CUT} -d"." -f2-|${REV}`.mp3"
+    ${ECHO}
+    ${ECHO} " ### Extracting audio..."
+    ${ECHO} "    from \"${f}\""
+    ${ECHO} "    to \"${target}\""
+    ${FFMPEG} -i "$f" -acodec libmp3lame -ac 2 -ab 320k -vn -y $target 2>${ERR} >${OUT}
+    if [[ ! $? -eq 0 ]]; then
+      ${ECHO}
+      ${ECHO} "Error Occurred"
+      ${ECHO} "====================="
+      ${CAT} ${OUT}
+      ${CAT} ${ERR}
+    fi
+done
+
+rm $ERR
+rm $OUT
+
