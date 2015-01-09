@@ -11,6 +11,7 @@ import hashlib
 import urllib2
 import sys
 
+
 def get_hash(name):
         readsize = 64 * 1024
         with open(name, 'rb') as f:
@@ -22,6 +23,8 @@ def get_hash(name):
 
 def sub_downloader(path):
 
+    print "======================="
+    print "Getting subtitle for:", path
     hash = get_hash(path)
     replace = [".avi",".mp4",".mkv",".mpg",".mpeg", ".flv"]
     for content in replace:
@@ -47,13 +50,16 @@ def sub_downloader(path):
         print "Subtitle already exists."
         return 1
 
-if __name__ == '__main__':
-    ret = 0
+
+def main():
+    returnval = 0
     try:
-        path = sys.argv[1]
-        ret = sub_downloader(path)
+        for moviePath in sys.argv[1:]:
+            returnval = returnval | sub_downloader(moviePath)
     except Exception, e:
         print str(e)
-        ret = e.errno
-    exit(ret)
-    
+        returnval = e.errno
+    return returnval
+
+if __name__ == '__main__':
+    exit(main())
