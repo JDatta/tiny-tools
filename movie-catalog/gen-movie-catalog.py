@@ -20,12 +20,6 @@ def regex_tokenize(s):
     return re.findall(TOKENIZING_REGEX, s)
 
 
-def tokenize(movie):
-    s = movie['meta']['basename']
-    tokens = regex_tokenize(s)
-    movie['meta']['tokens'] = tokens
-
-
 def is_non_name_token(token):
     if (re.match(".*[\d].*", token) and re.match(".*[\D].*", token)) or is_year(token):
         return True
@@ -42,6 +36,58 @@ def is_year(s):
             return False
     except ValueError:
         return False
+
+
+def get_regex_filter_str():
+    names = ""
+    for ext in RESTRICTED_EXTN:
+        escaped_ext = re.escape(ext)
+        if names != "":
+            names += "|"
+        names += escaped_ext
+    return ".*[" + names + "]$"
+
+
+# todo: move to a different class
+def csv_dumps(flat_dict, skip_keys=None):
+
+    if skip_keys is None:
+        skip_keys = []
+    s = ""
+
+    if len(flat_dict) == 0:
+        return s
+
+    first_movie = flat_dict[0]
+    first = True
+    keys = first_movie.keys()
+    keys = [item for item in keys if item not in skip_keys]
+
+    for key in keys:
+        if first:
+            first = False
+        else:
+            s += ","
+        s += key
+    s += "\n"
+
+    for movie in flat_dict:
+        first = True
+        for key in keys:
+            if first:
+                first = False
+            else:
+                s += ","
+            s += str(movie[key])
+        s += "\n"
+
+    return s
+
+
+def tokenize(movie):
+    s = movie['meta']['basename']
+    tokens = regex_tokenize(s)
+    movie['meta']['tokens'] = tokens
 
 
 def get_movie_name(movie):
@@ -67,16 +113,6 @@ def get_tags(movie):
     dir_name = movie['meta']['dir_name']
     dir_name = dir_name.strip("/")
     movie['tags'] = dir_name.split("/")
-
-
-def get_regex_filter_str():
-    names = ""
-    for ext in RESTRICTED_EXTN:
-        escaped_ext = re.escape(ext)
-        if names != "":
-            names += "|"
-        names += escaped_ext
-    return ".*[" + names + "]$"
 
 
 def human_readable_size(movie, suffix='B'):
@@ -142,9 +178,9 @@ def set_basic_info(root, filename):
         }
     }
 
+
 def walk(root):
 
-    movies = []
     for root, dirs, files in os.walk(root):
         files = filter(filter_movie(root), files)
         for filename in files:
@@ -155,68 +191,14 @@ def walk(root):
             get_movie_year(movie)
             human_readable_size(movie)
             #get_imdb_info(movie)
-            movies.append(movie)
-
-    return movies
-
-
-# todo: move to a different class
-def csv_dumps(flat_dict, skip_keys=None):
-
-    if skip_keys is None:
-        skip_keys = []
-    s = ""
-
-    if len(flat_dict) == 0:
-        return s
-
-    first_movie = flat_dict[0]
-    first = True
-    keys = first_movie.keys()
-    keys = [item for item in keys if item not in skip_keys]
-
-    for key in keys:
-        if first:
-            first = False
-        else:
-            s += ","
-        s += key
-    s += "\n"
-
-    for movie in flat_dict:
-        first = True
-        for key in keys:
-            if first:
-                first = False
-            else:
-                s += ","
-            s += str(movie[key])
-        s += "\n"
-
-    return s
-
-
-def test():
-    f = open("/home/jd/all_movies.txt")
-    for path in f:
-        if "." in path:
-            path = path.strip()
-            head, tail = os.path.split(path)
-            print get_movie_name(tail), "==>", tail
+            yield movie
 
 
 def main():
-    movies = []
-    for i in sys.argv[1:]:
-        movies.extend(walk(i))
-
-    movie_names = map(lambda x: (x['name'], x['year'], x['filename']), movies)
-    for i in movie_names:
-        print i
-
-    #print csv_dumps(movies, ["tags"])
+    movies = reduce(lambda a, x: a + [i for i in x], map(walk, sys.argv[1:]), [])
+    print csv_dumps(movies, ["tags"])
     #print json.dumps(movies)
-    
+
+
 if __name__ == '__main__':
     main()
-    #test()
