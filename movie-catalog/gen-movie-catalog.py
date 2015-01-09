@@ -20,16 +20,16 @@ def regex_tokenize(s):
     return re.findall(TOKENIZING_REGEX, s)
 
 
-def tokenize(s):
-    return regex_tokenize(s)
+def tokenize(movie):
+    s = movie['meta']['basename']
+    tokens = regex_tokenize(s)
+    movie['meta']['tokens'] = tokens
 
 
 def is_non_name_token(token):
     if (re.match(".*[\d].*", token) and re.match(".*[\D].*", token)) or is_year(token):
-        #print token, "True"
         return True
     else:
-        #print token, "False"
         return False
 
 
@@ -45,27 +45,28 @@ def is_year(s):
 
 
 def get_movie_name(movie):
-    name = movie['basename']
-    tokens = tokenize(name)
+    tokens = movie['meta']['tokens']
     movie_name = ""
     for token in tokens:
         if is_non_name_token(token):
             break
         movie_name += " " + token
-    return movie_name.strip()
+    movie['name'] = movie_name.strip()
 
 
-def get_movie_year(filename):
-    tokens = tokenize(filename)
+def get_movie_year(movie):
+
+    tokens = movie['meta']['tokens']
     for token in tokens:
         if is_year(token):
-            return int(token)
-    return None
+            movie['year'] = int(token)
+    movie['year'] = None
 
 
-def get_tags(dir_name):
+def get_tags(movie):
+    dir_name = movie['meta']['dir_name']
     dir_name = dir_name.strip("/")
-    return dir_name.split("/")
+    movie['tags'] = dir_name.split("/")
 
 
 def get_regex_filter_str():
@@ -78,12 +79,13 @@ def get_regex_filter_str():
     return ".*[" + names + "]$"
 
 
-def human_readable_size(num, suffix='B'):
+def human_readable_size(movie, suffix='B'):
+    num = movie['size']
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
+            movie['human_size'] = "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+    movie['human_size'] = "%.1f%s%s" % (num, 'Yi', suffix)
 
 
 def get_imdb_info(movie):
@@ -104,9 +106,9 @@ def get_imdb_info(movie):
 
     json_values = json.loads(response)
     if json_values["Response"] == "True":
-        return json_values
+        movie['imdb'] = json_values
     else:
-        return None
+        movie['imdb'] = None
 
 
 def filter_movie(root):
@@ -124,30 +126,35 @@ def filter_movie(root):
     return filter_movie_fn
 
 
+def set_basic_info(root, filename):
+    abs_path = os.path.join(root, filename)
+    size = os.path.getsize(abs_path)
+    basename, ext = os.path.splitext(filename)
+
+    return {
+        'filename': filename,
+        'abs_path': abs_path,
+        'size': size,
+        'ext': ext,
+        'meta': {
+            'dir_name': root,
+            'basename': basename
+        }
+    }
+
 def walk(root):
 
     movies = []
     for root, dirs, files in os.walk(root):
         files = filter(filter_movie(root), files)
         for filename in files:
-            abs_path = os.path.join(root, filename)
-            size = os.path.getsize(abs_path)
-            
-            movie = {
-                'filename': filename,
-                'abs_path': abs_path,
-                'size': size
-            }
-
-            # Todo: Make this a pipeline
-            basename, ext = os.path.splitext(filename)
-            movie['basename'] = basename
-            movie['ext'] = ext
-            movie['tags'] = get_tags(root)
-            movie['name'] = get_movie_name(movie)
-            movie['year'] = get_movie_year(filename)
-            movie['human_size'] = human_readable_size(movie['size'])
-            #movie['imdb'] = get_imdb_info(movie)
+            movie = set_basic_info(root, filename)
+            tokenize(movie)
+            get_tags(movie)
+            get_movie_name(movie)
+            get_movie_year(movie)
+            human_readable_size(movie)
+            #get_imdb_info(movie)
             movies.append(movie)
 
     return movies
