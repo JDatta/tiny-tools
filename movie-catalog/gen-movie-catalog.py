@@ -180,30 +180,24 @@ def filter_movie(root):
     return filter_movie_fn
 
 
-def set_basic_info(root, filename):
-    abs_path = os.path.join(root, filename)
-    size = os.path.getsize(abs_path)
-    basename, ext = os.path.splitext(filename)
+def set_basic_info(root):
 
-    return {
-        'filename': filename,
-        'abs_path': abs_path,
-        'size': size,
-        'ext': ext,
-        'meta': {
-            'dir_name': root,
-            'basename': basename
+    def set_basic_info_fn(filename):
+        abs_path = os.path.join(root, filename)
+        size = os.path.getsize(abs_path)
+        basename, ext = os.path.splitext(filename)
+
+        return {
+            'filename': filename,
+            'abs_path': abs_path,
+            'size': size,
+            'ext': ext,
+            'meta': {
+                'dir_name': root,
+                'basename': basename
+            }
         }
-    }
-
-
-def call(fn):
-    def apply_fn(movie):
-        #movie_c = deepcopy(movie)
-        movie_c = movie
-        fn(movie_c)
-        return movie_c
-    return apply_fn
+    return set_basic_info_fn
 
 
 def pipeline_each(data, fns):
@@ -212,34 +206,23 @@ def pipeline_each(data, fns):
                   data)
 
 
+def process_dir(rdf):
+    root = rdf[0]
+    files = rdf[2]
+    files = filter(filter_movie(root), files)
+    movies = map(set_basic_info(root), files)
+    return pipeline_each(movies, [
+        tokenize,
+        get_tags,
+        get_movie_name,
+        get_movie_year,
+        human_readable_size,
+        get_imdb_info
+    ])
+
+
 def walk(root):
-
-    for root, dirs, files in os.walk(root):
-        files = filter(filter_movie(root), files)
-        for filename in files:
-            movie = set_basic_info(root, filename)
-
-            movie = reduce(lambda a, x: x(a), [
-                tokenize,
-                get_tags,
-                get_movie_name,
-                human_readable_size
-            ], movie)
-            """
-            pipeline_each(movie, [
-                call(tokenize),
-                call(get_tags),
-                call(get_movie_name),
-                call(human_readable_size)
-            ])
-            """
-            #tokenize(movie)
-            #get_tags(movie)
-            #get_movie_name(movie)
-            #get_movie_year(movie)
-            #human_readable_size(movie)
-            #get_imdb_info(movie)
-            yield movie
+    return reduce(lambda a, x: extend(a, x), map(process_dir, os.walk(root)))
 
 
 def extend(a, x):
@@ -249,7 +232,7 @@ def extend(a, x):
 
 
 def main():
-    movies = reduce(lambda a, x: extend(a, x), map(walk, sys.argv[1:]), [])
+    movies = reduce(lambda a, x: a + x, map(walk, sys.argv[1:]), [])
     print json.dumps(movies)
     #print csv_dumps(movies, None, ['human_size'])
 
