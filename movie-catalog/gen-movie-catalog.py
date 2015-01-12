@@ -49,7 +49,7 @@ def get_regex_filter_str():
 
 
 # todo: move to a different class
-def csv_dumps(flat_dict, skip_keys=None):
+def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
 
     if skip_keys is None:
         skip_keys = []
@@ -61,7 +61,14 @@ def csv_dumps(flat_dict, skip_keys=None):
     first_movie = flat_dict[0]
     first = True
     keys = first_movie.keys()
-    keys = [item for item in keys if item not in skip_keys]
+
+    print accept_keys
+    if accept_keys is not None:
+        filter_fn = lambda x: x in accept_keys and x not in skip_keys
+    else:
+        filter_fn = lambda x: x not in skip_keys
+
+    keys = filter(filter_fn, keys)
 
     for key in keys:
         if first:
@@ -106,6 +113,7 @@ def get_movie_year(movie):
     for token in tokens:
         if is_year(token):
             movie['year'] = int(token)
+            return
     movie['year'] = None
 
 
@@ -120,6 +128,7 @@ def human_readable_size(movie, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
             movie['human_size'] = "%3.1f%s%s" % (num, unit, suffix)
+            return
         num /= 1024.0
     movie['human_size'] = "%.1f%s%s" % (num, 'Yi', suffix)
 
@@ -190,14 +199,21 @@ def walk(root):
             get_movie_name(movie)
             get_movie_year(movie)
             human_readable_size(movie)
-            #get_imdb_info(movie)
+            get_imdb_info(movie)
             yield movie
 
 
+def extend(a, x):
+    from copy import deepcopy
+    d = deepcopy(a)
+    d.extend(x)
+    return d
+
+
 def main():
-    movies = reduce(lambda a, x: a + [i for i in x], map(walk, sys.argv[1:]), [])
-    print csv_dumps(movies, ["tags"])
+    movies = reduce(lambda a, x: extend(a, x), map(walk, sys.argv[1:]), [])
     #print json.dumps(movies)
+    print csv_dumps(movies, None, ['human_size'])
 
 
 if __name__ == '__main__':
