@@ -22,8 +22,9 @@ def regex_tokenize(s):
     return re.findall(TOKENIZING_REGEX, s)
 
 
+# todo: break at dvdrip,
 def is_non_name_token(token):
-    if (re.match(".*[\d].*", token) and re.match(".*[\D].*", token)) or is_year(token):
+    if (re.match(".*[\d].*", token) and re.match(".*[\D].*", token)) or is_year(token) or token.lower() == "dvd":
         return True
     else:
         return False
@@ -92,8 +93,14 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
     return s
 
 
+# todo: TBD: Currently tokenizes the longest path component. Not sure if foolproof.
 def tokenize(movie):
     s = movie['meta']['movie_name_pick']
+    tags = movie['tags']
+    tags.append(s)
+    maxtag = max(tags, key=len)
+    s = s if len(maxtag) < 15 else maxtag
+
     tokens = regex_tokenize(s)
     movie['meta']['tokens'] = tokens
     return movie
@@ -111,7 +118,6 @@ def get_movie_name(movie):
 
 
 def get_movie_year(movie):
-
     tokens = movie['meta']['tokens']
     for token in tokens:
         if is_year(token):
@@ -235,11 +241,11 @@ def should_take_dir(root, files):
 def process_dir(rdf):
     root = rdf[0]
     files = rdf[2]
-    #files = filter(filter_movie(root), files)
+    files = filter(filter_movie(root), files)
     movies = map(set_basic_info(root, should_take_dir(root, files)), files)
     return pipeline_each(movies, [
-        tokenize,
         get_tags,
+        tokenize,
         get_movie_name,
         get_movie_year,
         human_readable_size
