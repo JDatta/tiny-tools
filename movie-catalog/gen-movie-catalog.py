@@ -5,6 +5,7 @@ import os
 import re
 import json
 import urllib2
+from copy import deepcopy
 
 # Config
 MIN_MOVIE_SIZE = 100 * 1024 * 1024; # 100 mb
@@ -92,9 +93,12 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
 
 
 def tokenize(movie):
+    #movie = deepcopy(movie_a)
+    #print movie
     s = movie['meta']['basename']
     tokens = regex_tokenize(s)
     movie['meta']['tokens'] = tokens
+    return movie
 
 
 def get_movie_name(movie):
@@ -105,6 +109,7 @@ def get_movie_name(movie):
             break
         movie_name += " " + token
     movie['name'] = movie_name.strip()
+    return movie
 
 
 def get_movie_year(movie):
@@ -113,14 +118,16 @@ def get_movie_year(movie):
     for token in tokens:
         if is_year(token):
             movie['year'] = int(token)
-            return
+            return movie
     movie['year'] = None
+    return movie
 
 
 def get_tags(movie):
     dir_name = movie['meta']['dir_name']
     dir_name = dir_name.strip("/")
     movie['tags'] = dir_name.split("/")
+    return movie
 
 
 def human_readable_size(movie, suffix='B'):
@@ -128,9 +135,10 @@ def human_readable_size(movie, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
             movie['human_size'] = "%3.1f%s%s" % (num, unit, suffix)
-            return
+            return movie
         num /= 1024.0
     movie['human_size'] = "%.1f%s%s" % (num, 'Yi', suffix)
+    return movie
 
 
 def get_imdb_info(movie):
@@ -154,6 +162,7 @@ def get_imdb_info(movie):
         movie['imdb'] = json_values
     else:
         movie['imdb'] = None
+    return movie
 
 
 def filter_movie(root):
@@ -188,23 +197,52 @@ def set_basic_info(root, filename):
     }
 
 
+def call(fn):
+    def apply_fn(movie):
+        #movie_c = deepcopy(movie)
+        movie_c = movie
+        fn(movie_c)
+        return movie_c
+    return apply_fn
+
+
+def pipeline_each(data, fns):
+    return reduce(lambda a, x: map(x, a),
+                  fns,
+                  data)
+
+
 def walk(root):
 
     for root, dirs, files in os.walk(root):
         files = filter(filter_movie(root), files)
         for filename in files:
             movie = set_basic_info(root, filename)
-            tokenize(movie)
-            get_tags(movie)
-            get_movie_name(movie)
-            get_movie_year(movie)
-            human_readable_size(movie)
-            get_imdb_info(movie)
+
+            movie = reduce(lambda a, x: x(a), [
+                tokenize,
+                get_tags,
+                get_movie_name,
+                human_readable_size
+            ], movie)
+            """
+            pipeline_each(movie, [
+                call(tokenize),
+                call(get_tags),
+                call(get_movie_name),
+                call(human_readable_size)
+            ])
+            """
+            #tokenize(movie)
+            #get_tags(movie)
+            #get_movie_name(movie)
+            #get_movie_year(movie)
+            #human_readable_size(movie)
+            #get_imdb_info(movie)
             yield movie
 
 
 def extend(a, x):
-    from copy import deepcopy
     d = deepcopy(a)
     d.extend(x)
     return d
@@ -212,8 +250,8 @@ def extend(a, x):
 
 def main():
     movies = reduce(lambda a, x: extend(a, x), map(walk, sys.argv[1:]), [])
-    #print json.dumps(movies)
-    print csv_dumps(movies, None, ['human_size'])
+    print json.dumps(movies)
+    #print csv_dumps(movies, None, ['human_size'])
 
 
 if __name__ == '__main__':
