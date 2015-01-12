@@ -18,24 +18,18 @@ from scipy.stats import gaussian_kde
 def filename_filter(f):
   validext=('')
   invalidext=('.srt','.nfo','.sub','txt')
-  return True
-  #return f.endswith(validext) and (not f.endswith(invalidext))
+  return f.endswith(validext) and (not f.endswith(invalidext))
 
 
 def filesize_plot(rootpath):
 
   l=[]
-  #l2=[]
   for root, dirs, files in os.walk(rootpath):
-    #l2.extend([(f, os.path.getsize(root+"/"+f)/(1024.0*1024.0)) for f in files if filename_filter(f)])
     l.extend([os.path.getsize(root+"/"+f)/(1024.0*1024.0) for f in files if filename_filter(f)])
-  
-  #for a,b in l2:
-  #  print b,a
+  print len(l), "files. Min size =", min(l), "Max size=", max(l)
 
   density = gaussian_kde(l)
 
-  print len(l), min(l), max(l)
   # set the covariance_factor, lower means more detail
   density.covariance_factor = lambda : .25
   density._compute_covariance()
@@ -46,6 +40,8 @@ def filesize_plot(rootpath):
   plt.title('Probability density of files in ' + rootpath)
   plt.grid(True)
   plt.plot(xs,density(xs))
+  
+  # Uncomment to print the histogram
   #l.sort()  
   #plt.hist(l, bins=2000)
   plt.show()
