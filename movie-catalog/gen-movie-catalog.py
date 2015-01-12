@@ -7,6 +7,8 @@ import json
 import urllib2
 from copy import deepcopy
 
+# todo: omit confidence value. How?
+
 # Config
 MIN_MOVIE_SIZE = 100 * 1024 * 1024; # 100 mb
 RESTRICTED_EXTN = [".pdf", ".docx", ".mp3"]
@@ -15,8 +17,7 @@ TOKENIZING_REGEX = "[A-Z]{2,}(?![a-z])|[A-Za-z]+(?=[A-Z0-9])|[\'a-zA-Z0-9]+"
 NON_TOKEN_REGEX = "([A-Z]*[0-9]+)|([0-9]*[A-Z]+)"
 FIRST_MOVIE_YEAR = 1890
 
-
-# todo: make this a class
+# todo: move to a new class
 def regex_tokenize(s):
     return re.findall(TOKENIZING_REGEX, s)
 
@@ -49,7 +50,7 @@ def get_regex_filter_str():
     return ".*[" + names + "]$"
 
 
-# todo: move to a different class
+# todo: move to a new class
 def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
 
     if skip_keys is None:
@@ -63,7 +64,6 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
     first = True
     keys = first_movie.keys()
 
-    print accept_keys
     if accept_keys is not None:
         filter_fn = lambda x: x in accept_keys and x not in skip_keys
     else:
@@ -93,9 +93,7 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
 
 
 def tokenize(movie):
-    #movie = deepcopy(movie_a)
-    #print movie
-    s = movie['meta']['basename']
+    s = movie['meta']['movie_name_pick']
     tokens = regex_tokenize(s)
     movie['meta']['tokens'] = tokens
     return movie
@@ -108,7 +106,7 @@ def get_movie_name(movie):
         if is_non_name_token(token):
             break
         movie_name += " " + token
-    movie['name'] = movie_name.strip()
+    movie['name'] = movie_name.strip().title()
     return movie
 
 
@@ -124,9 +122,9 @@ def get_movie_year(movie):
 
 
 def get_tags(movie):
-    dir_name = movie['meta']['dir_name']
-    dir_name = dir_name.strip("/")
-    movie['tags'] = dir_name.split("/")
+    dir_path = movie['meta']['dir_path']
+    dir_path = dir_path.strip("/")
+    movie['tags'] = dir_path.split("/")
     return movie
 
 
@@ -142,7 +140,6 @@ def human_readable_size(movie, suffix='B'):
 
 
 def get_imdb_info(movie):
-
     name = movie['name']
     year = movie['year']
     name = name.strip()
@@ -180,21 +177,29 @@ def filter_movie(root):
     return filter_movie_fn
 
 
-def set_basic_info(root):
+def set_basic_info(root, movie_in_dirname=False):
 
     def set_basic_info_fn(filename):
         abs_path = os.path.join(root, filename)
         size = os.path.getsize(abs_path)
         basename, ext = os.path.splitext(filename)
+        dir_basename = os.path.basename(os.path.normpath(root))
+
+        if movie_in_dirname:
+            movie_name_pick = dir_basename
+        else:
+            movie_name_pick = basename
 
         return {
             'filename': filename,
+            'dir_basename': dir_basename,
             'abs_path': abs_path,
             'size': size,
             'ext': ext,
             'meta': {
-                'dir_name': root,
-                'basename': basename
+                'dir_path': root,
+                'basename': basename,
+                'movie_name_pick': movie_name_pick
             }
         }
     return set_basic_info_fn
@@ -206,35 +211,56 @@ def pipeline_each(data, fns):
                   data)
 
 
+def should_take_dir(root, files):
+
+    ext_set = reduce(lambda a, x: operate(set.add, a, x), map(lambda f: os.path.splitext(f)[1], files), set())
+
+    if len(files) == 0:
+        avg_length = 0
+    else:
+        avg_length = reduce(lambda a, x: a + len(x), map(lambda f: os.path.splitext(f)[0], files), 0) * 1.0 / len(files)
+
+    max_length = reduce(lambda a, x: len(x) if len(x) > a else a, map(lambda f: os.path.splitext(f)[0], files), 0)
+
+    # todo: additional cases: diff between max and max_common_substr; diff between dirbasename and filebasename etc
+    # todo: weighted sum of these numbers?
+    # todo: how to define these heuristic values more formally?
+    few_files = 5 >= len(files) >= 2
+    same_type = len(ext_set) == 1
+    similar_file_name_sz = (max_length - avg_length) <= 2
+
+    return few_files and same_type and similar_file_name_sz
+
+
 def process_dir(rdf):
     root = rdf[0]
     files = rdf[2]
-    files = filter(filter_movie(root), files)
-    movies = map(set_basic_info(root), files)
+    #files = filter(filter_movie(root), files)
+    movies = map(set_basic_info(root, should_take_dir(root, files)), files)
     return pipeline_each(movies, [
         tokenize,
         get_tags,
         get_movie_name,
         get_movie_year,
-        human_readable_size,
-        get_imdb_info
+        human_readable_size
+        #,get_imdb_info
     ])
 
 
 def walk(root):
-    return reduce(lambda a, x: extend(a, x), map(process_dir, os.walk(root)))
+    return reduce(lambda a, x: operate(list.extend, a, x), map(process_dir, os.walk(root)))
 
 
-def extend(a, x):
+def operate(opt, a, x):
     d = deepcopy(a)
-    d.extend(x)
+    opt(d, x)
     return d
 
 
 def main():
     movies = reduce(lambda a, x: a + x, map(walk, sys.argv[1:]), [])
-    print json.dumps(movies)
-    #print csv_dumps(movies, None, ['human_size'])
+    #print json.dumps(movies)
+    print csv_dumps(movies, None, ['name', 'abs_path'])
 
 
 if __name__ == '__main__':
