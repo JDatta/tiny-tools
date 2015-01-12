@@ -53,7 +53,7 @@ def get_regex_filter_str():
 
 def getStrVal(dict, key):
     try:
-        return "," + dict[key]
+        return "," + str(dict[key]).replace(",","")
     except:
         return ","
 
@@ -88,8 +88,6 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
     s += ", Rating, Votes, IMDB_Year, Runtime"
     s += "\n"
 
-    print s
-
     for movie in flat_dict:
 
         newline = ""
@@ -100,12 +98,9 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
             else:
                 newline += ","
             try:
-                try:
-                    newline += str(movie[key])
-                except (UnicodeEncodeError, UnicodeDecodeError):
-                    newline += movie[key]
-            except:
-                pass
+                newline += str(movie[key]).replace(",","<comma>")
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                newline += movie[key].replace(",","<comma>")
 
         if 'imdb' in movie:
             newline += getStrVal(movie['imdb'], 'imdbRating')
@@ -115,17 +110,9 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
         else:
             newline += ",,,,"
 
-        try:
-            print newline
-        except:
-            try:
-                print newline.encode('utf-8').strip()
-            except:
-                pass
-
         s += newline + "\n"
 
-    return s.encode('utf-8').strip()
+    return s.encode('utf-8')
 
 
 # todo: TBD: Currently tokenizes the longest path component. Not sure if foolproof.
@@ -134,7 +121,7 @@ def tokenize(movie):
     tags = movie['tags']
     tags.append(s)
     maxtag = max(tags, key=len)
-    s = s if len(maxtag) < 15 else maxtag
+    s = s if len(maxtag) < 20 else maxtag
 
     tokens = regex_tokenize(s)
     movie['meta']['tokens'] = tokens
@@ -305,16 +292,16 @@ def operate(opt, a, x):
 
 def main():
     movies = reduce(lambda a, x: a + x, map(walk, sys.argv[1:]), [])
-    #print json.dumps(movies, indent=4, sort_keys=True)
-    print csv_dumps(movies, None, ['name', 'abs_path', 'year', 'human_size'])
+    print json.dumps(movies, indent=4, sort_keys=True)
+    #print csv_dumps(movies, None, ['name', 'abs_path', 'year', 'human_size'])
 
 
 def json2csv():
     f = open(sys.argv[1])
-    jsonmovies = json.loads(f.read())
+    json_movies = json.loads(f.read())
     f.close()
-    csv_dumps(jsonmovies, None, ['name', 'abs_path', 'year', 'human_size'])
+    print csv_dumps(json_movies, None, ['name', 'abs_path', 'year', 'human_size'])
 
 if __name__ == '__main__':
-    #main()
-    json2csv()
+    main()
+    #json2csv()
