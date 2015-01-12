@@ -20,12 +20,12 @@ def filename_filter(f):
   invalidext=('.srt','.nfo','.sub','txt')
   return f.endswith(validext) and (not f.endswith(invalidext))
 
-
 def filesize_plot(rootpath):
 
   l=[]
   for root, dirs, files in os.walk(rootpath):
-    l.extend([os.path.getsize(root+"/"+f)/(1024.0*1024.0) for f in files if filename_filter(f)])
+    l.extend(map(lambda f: os.path.getsize(os.path.join(root,f))/(1024.0*1024.0), filter(filename_filter, files)))
+
   print len(l), "files. Min size =", min(l), "Max size=", max(l)
 
   density = gaussian_kde(l)
