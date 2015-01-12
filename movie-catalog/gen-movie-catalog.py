@@ -51,6 +51,13 @@ def get_regex_filter_str():
     return ".*[" + names + "]$"
 
 
+def getStrVal(dict, key):
+    try:
+        return "," + dict[key]
+    except:
+        return ","
+
+
 # todo: move to a new class
 def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
 
@@ -78,19 +85,47 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
         else:
             s += ","
         s += key
+    s += ", Rating, Votes, IMDB_Year, Runtime"
     s += "\n"
 
+    print s
+
     for movie in flat_dict:
+
+        newline = ""
         first = True
         for key in keys:
             if first:
                 first = False
             else:
-                s += ","
-            s += str(movie[key])
-        s += "\n"
+                newline += ","
+            try:
+                try:
+                    newline += str(movie[key])
+                except (UnicodeEncodeError, UnicodeDecodeError):
+                    newline += movie[key]
+            except:
+                pass
 
-    return s
+        if 'imdb' in movie:
+            newline += getStrVal(movie['imdb'], 'imdbRating')
+            newline += getStrVal(movie['imdb'],'imdbVotes')
+            newline += getStrVal(movie['imdb'], 'Year')
+            newline += getStrVal(movie['imdb'],'Runtime')
+        else:
+            newline += ",,,,"
+
+        try:
+            print newline
+        except:
+            try:
+                print newline.encode('utf-8').strip()
+            except:
+                pass
+
+        s += newline + "\n"
+
+    return s.encode('utf-8').strip()
 
 
 # todo: TBD: Currently tokenizes the longest path component. Not sure if foolproof.
@@ -145,13 +180,17 @@ def human_readable_size(movie, suffix='B'):
     return movie
 
 
+def finalize(movie):
+    movie.pop('meta', None)
+    return movie
+
+
 def get_imdb_info(movie):
     name = movie['name']
     year = movie['year']
     name = name.strip()
     name = name.replace(" ", "%20")
 
-    headers = {}
     url = "http://www.omdbapi.com/?t=" + name
 
     if year:
@@ -217,7 +256,7 @@ def pipeline_each(data, fns):
                   data)
 
 
-def should_take_dir(root, files):
+def should_take_dir(files):
 
     ext_set = reduce(lambda a, x: operate(set.add, a, x), map(lambda f: os.path.splitext(f)[1], files), set())
 
@@ -242,14 +281,15 @@ def process_dir(rdf):
     root = rdf[0]
     files = rdf[2]
     files = filter(filter_movie(root), files)
-    movies = map(set_basic_info(root, should_take_dir(root, files)), files)
+    movies = map(set_basic_info(root, should_take_dir(files)), files)
     return pipeline_each(movies, [
         get_tags,
         tokenize,
         get_movie_name,
         get_movie_year,
         human_readable_size
-        #,get_imdb_info
+        , get_imdb_info
+        , finalize
     ])
 
 
@@ -265,9 +305,16 @@ def operate(opt, a, x):
 
 def main():
     movies = reduce(lambda a, x: a + x, map(walk, sys.argv[1:]), [])
-    #print json.dumps(movies)
-    print csv_dumps(movies, None, ['name', 'abs_path'])
+    #print json.dumps(movies, indent=4, sort_keys=True)
+    print csv_dumps(movies, None, ['name', 'abs_path', 'year', 'human_size'])
 
+
+def json2csv():
+    f = open(sys.argv[1])
+    jsonmovies = json.loads(f.read())
+    f.close()
+    csv_dumps(jsonmovies, None, ['name', 'abs_path', 'year', 'human_size'])
 
 if __name__ == '__main__':
-    main()
+    #main()
+    json2csv()
