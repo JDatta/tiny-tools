@@ -9,13 +9,14 @@ from copy import deepcopy
 
 # todo: omit confidence value. How?
 
-# Config
-MIN_MOVIE_SIZE = 100 * 1024 * 1024; # 100 mb
+# Configuration
+MIN_MOVIE_SIZE = 100 * 1024 * 1024  # 100 mb
 RESTRICTED_EXTN = [".pdf", ".docx", ".mp3"]
 #TOKENIZING_REGEX = "[A-Z]{2,}(?![a-z])|[A-Z][a-z]+(?=[A-Z])|[\'\w\-]+"
 TOKENIZING_REGEX = "[A-Z]{2,}(?![a-z])|[A-Za-z]+(?=[A-Z0-9])|[\'a-zA-Z0-9]+"
 NON_TOKEN_REGEX = "([A-Z]*[0-9]+)|([0-9]*[A-Z]+)"
 FIRST_MOVIE_YEAR = 1890
+
 
 # todo: move to a new class
 def regex_tokenize(s):
@@ -51,9 +52,9 @@ def get_regex_filter_str():
     return ".*[" + names + "]$"
 
 
-def getStrVal(dict, key):
+def get_cell_value(dic, key):
     try:
-        return "," + str(dict[key]).replace(",","")
+        return "," + str(dic[key]).replace(",", "")
     except:
         return ","
 
@@ -98,21 +99,33 @@ def csv_dumps(flat_dict, skip_keys=None, accept_keys=None):
             else:
                 newline += ","
             try:
-                newline += str(movie[key]).replace(",","<comma>")
+                newline += str(movie[key]).replace(",", "<comma>")
             except (UnicodeEncodeError, UnicodeDecodeError):
-                newline += movie[key].replace(",","<comma>")
+                newline += movie[key].replace(",", "<comma>")
 
         if 'imdb' in movie:
-            newline += getStrVal(movie['imdb'], 'imdbRating')
-            newline += getStrVal(movie['imdb'],'imdbVotes')
-            newline += getStrVal(movie['imdb'], 'Year')
-            newline += getStrVal(movie['imdb'],'Runtime')
+            newline += get_cell_value(movie['imdb'], 'imdbRating')
+            newline += get_cell_value(movie['imdb'], 'imdbVotes')
+            newline += get_cell_value(movie['imdb'], 'Year')
+            newline += get_cell_value(movie['imdb'], 'Runtime')
         else:
             newline += ",,,,"
 
         s += newline + "\n"
 
     return s.encode('utf-8')
+
+
+def pipeline_each(data, fns):
+    return reduce(lambda a, x: map(x, a),
+                  fns,
+                  data)
+
+
+def operate(opt, a, x):
+    d = deepcopy(a)
+    opt(d, x)
+    return d
 
 
 # todo: TBD: Currently tokenizes the longest path component. Not sure if foolproof.
@@ -156,7 +169,7 @@ def get_tags(movie):
     return movie
 
 
-def human_readable_size(movie, suffix='B'):
+def get_human_readable_size(movie, suffix='B'):
     num = movie['size']
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
@@ -237,12 +250,6 @@ def set_basic_info(root, movie_in_dirname=False):
     return set_basic_info_fn
 
 
-def pipeline_each(data, fns):
-    return reduce(lambda a, x: map(x, a),
-                  fns,
-                  data)
-
-
 def should_take_dir(files):
 
     ext_set = reduce(lambda a, x: operate(set.add, a, x), map(lambda f: os.path.splitext(f)[1], files), set())
@@ -274,20 +281,14 @@ def process_dir(rdf):
         tokenize,
         get_movie_name,
         get_movie_year,
-        human_readable_size
-        , get_imdb_info
-        , finalize
+        get_human_readable_size,
+        get_imdb_info,
+        finalize
     ])
 
 
 def walk(root):
     return reduce(lambda a, x: operate(list.extend, a, x), map(process_dir, os.walk(root)))
-
-
-def operate(opt, a, x):
-    d = deepcopy(a)
-    opt(d, x)
-    return d
 
 
 def main():
