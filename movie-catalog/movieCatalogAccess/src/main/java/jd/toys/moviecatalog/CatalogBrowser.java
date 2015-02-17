@@ -1,45 +1,25 @@
 package jd.toys.moviecatalog;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
-import jd.toys.moviecatalog.hibernate.MovieManager;
-import jd.toys.moviecatalog.hibernate.entities.Movie;
+import jd.toys.moviecatalog.jpa.entities.Movie;
+import jd.toys.moviecatalog.jpa.impl.JPAManager;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
 public class CatalogBrowser {
 
-  private static void dbRW(final List<Movie> movies)
-    throws Exception {
-    try (MovieManager movieManager = new MovieManager()) {
-      movieManager.save(movies);
+  private static void printMovies(final List<Movie> movies) {
+    for (final Movie m : movies) {
+      System.out.print("Id: " + m.getId());
+      System.out.print(" Name: " + m.getName());
 
-      final List<Movie> movies_back = movieManager.list();
-      for (final Movie m : movies_back) {
-        System.out.print("Id: " + m.getId());
-        System.out.print(" Name: " + m.getName());
-        System.out.print(" Year: " + m.getYear());
-        System.out.println(" Path: " + m.getAbsPath());
+      if (m.getImdb() != null) {
+        System.out.print(" Rating: " + m.getImdb().getImdbRating());
       }
-    }
-  }
-
-  public static void jsonReadingTest(final ObjectMapper mapper)
-    throws JsonParseException, JsonMappingException, IOException {
-    final List<Movie> movies =
-      mapper.readValue(
-        new File("data/movies.json"), new TypeReference<List<Movie>>() {
-        });
-    for (final Movie movie : movies) {
-      System.out.println(movie.getName() + " : " + movie.getYear());
-      if (movie.getImdb() != null) {
-        System.out.println(">>>IMDB::" + movie.getImdb().getImdbRating());
-      }
+      System.out.println(" Year: " + m.getYear());
     }
   }
 
@@ -47,13 +27,21 @@ public class CatalogBrowser {
     throws Exception {
 
     final ObjectMapper mapper = new ObjectMapper();
-
-    // jsonReadingTest(mapper);
-
     final List<Movie> movies =
       mapper.readValue(new File("data/movies.json"),
         new TypeReference<List<Movie>>() {
         });
-    dbRW(movies);
+    try (MovieManager movieManager = new JPAManager()) {
+      long t0 = System.currentTimeMillis();
+      movieManager.save(movies);
+      long t1 = System.currentTimeMillis();
+      System.out.println("Time to Save: " + (t1 - t0));
+      t0 = System.currentTimeMillis();
+      final List<Movie> movies4mDB = movieManager.list();
+      t1 = System.currentTimeMillis();
+      System.out.println("Time to Retrieve: " + (t1 - t0));
+      printMovies(movies4mDB);
+
+    }
   }
 }

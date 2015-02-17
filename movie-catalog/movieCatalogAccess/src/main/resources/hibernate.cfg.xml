@@ -10,8 +10,8 @@
  <property name="dialect">org.hibernate.dialect.DerbyDialect</property>  
  <property name="connection.url">jdbc:derby:memory:myDB;create=true</property>
 <!--  <property name="connection.driver_class">org.apache.derby.jdbc.ClientDriver</property>   -->
- <mapping class="jd.toys.moviecatalog.hibernate.entities.Movie"/>  
- <mapping class="jd.toys.moviecatalog.hibernate.entities.Imdb"/>  
+ <mapping class="jd.toys.moviecatalog.jpa.entities.Movie"/>  
+ <mapping class="jd.toys.moviecatalog.jpa.entities.Imdb"/>  
 </session-factory>  
   
 </hibernate-configuration>  

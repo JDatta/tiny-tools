@@ -1,8 +1,9 @@
-package jd.toys.moviecatalog.hibernate;
+package jd.toys.moviecatalog.hibernate.impl;
 
 import java.util.List;
 
-import jd.toys.moviecatalog.hibernate.entities.Movie;
+import jd.toys.moviecatalog.MovieManager;
+import jd.toys.moviecatalog.jpa.entities.Movie;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -12,11 +13,11 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
 
-public class MovieManager implements AutoCloseable {
+public class HibernateMovieManager implements AutoCloseable, MovieManager {
 
   private final SessionFactory sessionFactory;
 
-  public MovieManager() {
+  public HibernateMovieManager() {
     this.sessionFactory = createSessionFactory();
   }
 
@@ -31,6 +32,7 @@ public class MovieManager implements AutoCloseable {
     return sessionFactory;
   }
 
+  @Override
   public void save(final List<Movie> movies) {
 
     Session session = null;
@@ -57,6 +59,10 @@ public class MovieManager implements AutoCloseable {
     System.out.println("successfully saved");
   }
 
+  /* (non-Javadoc)
+   * @see jd.toys.moviecatalog.hibernate.MovieManager#list()
+   */
+  @Override
   @SuppressWarnings("unchecked")
   public List<Movie> list() {
     Session session = null;
@@ -81,6 +87,9 @@ public class MovieManager implements AutoCloseable {
     }
   }
 
+  /* (non-Javadoc)
+   * @see jd.toys.moviecatalog.hibernate.MovieManager#close()
+   */
   @Override
   public void close() throws Exception {
     this.sessionFactory.close();

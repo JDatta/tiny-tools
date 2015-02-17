@@ -9,21 +9,21 @@ public class ExtendPropertyNamingStrategy extends PropertyNamingStrategy {
 
   @Override
   public String nameForField(
-    final MapperConfig config, final AnnotatedField field,
+    final MapperConfig<?> config, final AnnotatedField field,
     final String defaultName) {
     return this.convert(defaultName);
   }
 
   @Override
   public String nameForGetterMethod(
-    final MapperConfig config, final AnnotatedMethod method,
+    final MapperConfig<?> config, final AnnotatedMethod method,
     final String defaultName) {
     return this.convert(defaultName);
   }
 
   @Override
   public String nameForSetterMethod(
-    final MapperConfig config, final AnnotatedMethod method,
+    final MapperConfig<?> config, final AnnotatedMethod method,
     final String defaultName) {
     return this.convert(defaultName);
   }

@@ -1,4 +1,4 @@
-package jd.toys.moviecatalog.hibernate;
+package jd.toys.moviecatalog.jpa.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

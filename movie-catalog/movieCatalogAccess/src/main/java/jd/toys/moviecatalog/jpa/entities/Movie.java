@@ -1,4 +1,4 @@
-package jd.toys.moviecatalog.hibernate.entities;
+package jd.toys.moviecatalog.jpa.entities;
 
 import java.util.List;
 
