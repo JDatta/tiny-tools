@@ -1,0 +1,11 @@
+india http://news.google.com/news?ned=in&topic=h&output=rss
+bengal http://news.google.com/news/section?pz=1&cf=all&geo=west+bengal&output=rss
+barrackpore http://news.google.com/news/section?pz=1&cf=all&geo=barrackpore&output=rss
+kolkata http://news.google.com/news?q=kolkata&output=rss
+paoli_dam http://news.google.com/news?q=paoli+dam&output=rss
+sports http://news.google.com/news?ned=in&topic=s&output=rss
+tech http://news.google.com/news?ned=in&hl=en&topic=tc&output=rss
+ustech http://news.google.com/news?ned=us&hl=en&topic=tc&output=rss
+science http://news.google.com/news?ned=us&hl=en&topic=snc&output=rss
+science_india http://news.google.com/news?ned=in&hl=en&topic=snc&output=rss
+
