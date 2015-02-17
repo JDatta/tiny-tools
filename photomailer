@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#
+# Clicks a photo in webcam and sends it to the email id 
+# given in argument. Uses SMTP server running locally.
+#
+# Usage: ./photomailer mailid@company.com
+#
+# Requires: fswebcam, mutt
+#
+
+rm /home/jd/web-cam-shot.jpg
+fswebcam -r 640x480 --jpeg 85 -D 1 /home/jd/web-cam-shot.jpg > /dev/null 2>&1
+export EMAIL="Photo Mailer <photo-mailer@morpheus.me>"
+echo "Hi.. Here is security photo for you" | mutt -a "/home/jd/web-cam-shot.jpg" -s "See photo attached" -- $1
+unset EMAIL
+
+
