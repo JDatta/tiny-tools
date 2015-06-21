@@ -17,6 +17,7 @@ TOKENIZING_REGEX = "[A-Z]{2,}(?![a-z])|[A-Za-z]+(?=[A-Z0-9])|[\'a-zA-Z0-9]+"
 NON_TOKEN_REGEX = "([A-Z]*[0-9]+)|([0-9]*[A-Z]+)"
 FIRST_MOVIE_YEAR = 1890
 
+movie_cache = {}
 
 # todo: move to a new class
 def regex_tokenize(s):
@@ -181,11 +182,13 @@ def get_human_readable_size(movie, suffix='B'):
 
 
 def finalize(movie):
+    print >> sys.stderr, "Done processing:", movie['abs_path']
     movie.pop('meta', None)
     return movie
 
 
 def get_imdb_info(movie):
+
     name = movie['name']
     year = movie['year']
     name = name.strip()
@@ -208,13 +211,20 @@ def get_imdb_info(movie):
 
 
 def filter_movie(root):
+    global movie_cache
+
     def filter_movie_fn(filename):
+        global movie_cache
         abs_path = os.path.join(root, filename)
         size = os.path.getsize(abs_path)
         name_regex = get_regex_filter_str()
 
+        if abs_path in movie_cache:
+            return False
+
         if (size > MIN_MOVIE_SIZE and
                 (not re.match(name_regex, filename))):
+            print >> sys.stderr, "New movie found:", abs_path
             return True
         else:
             return False
@@ -291,8 +301,26 @@ def walk(root):
     return reduce(lambda a, x: operate(list.extend, a, x), map(process_dir, os.walk(root)))
 
 
+def populate_cache(file_name):
+    global movie_cache
+    with open(file_name) as data_file:
+        cached_movies = json.load(data_file)
+    for amovie in cached_movies:
+        movie_cache[amovie['abs_path']] = amovie
+
+
+def merge_movies(movies):
+    global movie_cache
+    # assert
+    for movie in movies:
+        if movie['abs_path'] in movie_cache:
+            print "FATAL:: Merge did not work::",movie['abs_path']
+    movies.extend(movie_cache.values())
+
 def main():
-    movies = reduce(lambda a, x: a + x, map(walk, sys.argv[1:]), [])
+    populate_cache(sys.argv[1])
+    movies = reduce(lambda a, x: a + x, map(walk, sys.argv[2:]), [])
+    merge_movies(movies)
     print json.dumps(movies, indent=4, sort_keys=True)
     #print csv_dumps(movies, None, ['name', 'abs_path', 'year', 'human_size'])
 
