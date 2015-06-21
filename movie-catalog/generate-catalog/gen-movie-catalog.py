@@ -7,6 +7,29 @@ import json
 import urllib2
 from copy import deepcopy
 
+"""
+    Sample usage:
+
+    FIRST RUN:
+    ``` bash
+    ./gen-movie-catalog.py ~/movie_catalogs/all_movies_pretty_imdb_2.json \
+    /run/media/jd/STORE/Movies/ /run/media/jd/Linux/Movies/ \
+    /run/media/jd/winstore2/Movies/ /run/media/jd/Windows_store/Movies/ \
+    /run/media/jd/STORE_GANDALF/Movies/ /run/media/jd/winstore2/Soaps/ \
+    /run/media/jd/Windows_store/Soaps/ /run/media/jd/STORE/Soaps/ \
+    /run/media/jd/Linux/Soaps/ > \
+    ~/movie_catalogs/all_movies.json
+    ```
+
+    INCREMENTAL RUN:
+    ``` bash
+    ./gen-movie-catalog.py \
+    ~/movie_catalogs/all_movies.json \
+    /run/media/jd/STORE_GANDALF/Movies/ \
+    > ~/movie_catalogs/all_movies_updated.json
+    ```
+"""
+
 # todo: omit confidence value. How?
 
 # Configuration
