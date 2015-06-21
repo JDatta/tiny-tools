@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>  
+<!DOCTYPE hibernate-configuration PUBLIC  
+          "-//Hibernate/Hibernate Configuration DTD 3.0//EN"  
+          "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">  
+  
+<hibernate-configuration>  
+  
+<session-factory>  
+ <property name="hbm2ddl.auto">create</property>  
+ <property name="dialect">org.hibernate.dialect.DerbyDialect</property>  
+ <property name="connection.url">jdbc:derby:memory:myDB;create=true</property>
+<!--  <property name="connection.driver_class">org.apache.derby.jdbc.ClientDriver</property>   -->
+ <mapping class="jd.toys.moviecatalog.jpa.entities.Movie"/>  
+ <mapping class="jd.toys.moviecatalog.jpa.entities.Imdb"/>  
+</session-factory>  
+  
+</hibernate-configuration>  
