@@ -9,6 +9,7 @@ topics.txt (a file containing the order of the topic to display)
 This program can also be used to search for ANY arbitrary news topic. Following is one example
 invocation:
 
+```
 [joydip@localhost src]$ ./robonews.py search "tamilnadu"
 Getting your feeds. Please wait...
 
@@ -27,4 +28,5 @@ Getting your feeds. Please wait...
  8: Tamil Nadu SSLC/ Class 10 Results expected on 4th of June - Oneindia
  9: TamilNadu HSC Results 2013 to be declared on 9th May - Newstrack India
 10: LTTE commemorations in Tamilnadu banned - Hiru News
+```
 
