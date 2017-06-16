@@ -7,7 +7,7 @@ import json
 import urllib2
 from copy import deepcopy
 
-"""
+help = """
     Sample usage:
 
     FIRST RUN:
@@ -27,6 +27,11 @@ from copy import deepcopy
     ~/movie_catalogs/all_movies.json \
     /run/media/jd/STORE_GANDALF/Movies/ \
     > ~/movie_catalogs/all_movies_updated.json
+    ```
+
+    JSON to CSV:
+    ``` bash
+    ./gen-movie-catalog.py json2csv ~/all_movies.json > ~/all_movies.csv
     ```
 """
 
@@ -349,11 +354,15 @@ def main():
 
 
 def json2csv():
-    f = open(sys.argv[1])
+    f = open(sys.argv[2])
     json_movies = json.loads(f.read())
     f.close()
     print csv_dumps(json_movies, None, ['name', 'abs_path', 'year', 'human_size'])
 
 if __name__ == '__main__':
-    main()
-    #json2csv()
+    if len(sys.argv) == 1 or sys.argv[1] == "help":
+        print help
+    elif sys.argv[1] == "json2csv":
+        json2csv()
+    else:
+        main()
