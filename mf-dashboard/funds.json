@@ -3,9 +3,29 @@
     "fund": "TSDG-Axis Long Term Equity Fund - Direct Growth",
     "nick": "AXIS ELSS",
     "scode": 112323,
-    "purchase_price": 20,
-    "purchase_date": "28/12/2013",
-    "purchase_units": 1.143,
+    "purchase_price": 5000,
+    "purchase_date": "28/12/2015",
+    "purchase_units": 158.6143,
+    "nav": 0,
+    "date": 0
+  },
+  "118968_0": {
+    "fund": "HDFC Growth Fund-DIR-Growth",
+    "nick": "HDFC Growth (LC)",
+    "scode": 118968,
+    "purchase_price": 3000,
+    "purchase_date": "08/06/2017",
+    "purchase_units": 17.4550,
+    "nav": 0,
+    "date": 0
+  },
+  "118968_1": {
+    "fund": "HDFC Growth Fund-DIR-Growth",
+    "nick": "HDFC Growth (LC) (Recent)",
+    "scode": 118968,
+    "purchase_price": 3000,
+    "purchase_date": "02/04/2018",
+    "purchase_units": 16.1865,
     "nav": 0,
     "date": 0
   }

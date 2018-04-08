@@ -2,6 +2,7 @@
 
 import json
 import requests
+import operator
 from pip.cmdoptions import pre
 
 row_format = "{:25}: {:10.2f} ==> {:10.2f} ({:>7} since {}) ({:>7} yearly)"    
@@ -22,18 +23,28 @@ text file from amfi and parse it.
 """
 def populate_funds_nav(funds):
     # Get data from mashape and populate the NAV and date fields of funds json
-    codes = funds.keys()
+    #codes = map(operator.itemgetter('scode'), funds.values())
+    codes = [x["scode"] for x in funds.values()]
     navs = []
     for i in range(0, len(codes), 5):
         payload = {"scodes": codes[i:i+5]}
         r = requests.post(mashape_url, data = json.dumps(payload), headers = mashape_header)
         content = json.loads(r.content)
         navs.extend(content)
-    
+
+    # Convert navs list to a map for easy lookup
+    nav_map = {}
     for nav_item in navs:
-        fund_item = funds[str(nav_item["scode"])]
+        nav_map[nav_item["scode"]] = nav_item
+
+    # Now populate the funds map with the nav values
+    # from nav map
+    for akey in funds.keys():
+        fund_item = funds[akey]
+        nav_item = nav_map[fund_item["scode"]]
         fund_item["nav"] = float(nav_item["nav"])
         fund_item["date"] = nav_item["date"]
+
 
 def read_funds_json(funds_file_name):
     with open(funds_file_name) as json_file:
@@ -53,7 +64,7 @@ def print_funds_summary(funds):
     total_purchase = 0
     total_present = 0
     
-    for key in funds.keys():
+    for key in (x[0] for x in sorted(funds.items(), key=lambda x: x[1]["nick"])):
         fund = funds.get(key)
         present_price = fund["nav"] * fund["purchase_units"]
         purchase_price = fund["purchase_price"]
