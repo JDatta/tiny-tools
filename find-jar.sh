@@ -37,7 +37,7 @@ fi
 
 IFS=$(${ECHO} -en "\n\b") # Set the field separator newline
 
-for f in `find ${1} -iname *.jar`; do
+for f in `find ${1} -iname "*.jar"`; do
   ${JAR} -tf ${f}| ${GREP} --color $2
   if [ $? == 0 ]; then
     _GREEN "Match found: "
