@@ -34,7 +34,7 @@ class DependencyPrecheckTests(unittest.TestCase):
         with self.assertRaises(photobackup.DependencyError) as error:
             photobackup.check_dependencies(import_module=import_module, python_version=(3, 11, 0))
 
-        self.assertIn("./setup_venv.sh", str(error.exception))
+        self.assertIn("./setup.sh", str(error.exception))
         self.assertIn("PIL.Image", str(error.exception))
 
     def test_precheck_reports_heif_registration_failure(self) -> None:

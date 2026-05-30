@@ -5,7 +5,7 @@
 The supported command is:
 
 ```sh
-./photobackup.sh [--dry-run] [--mock-copy] <source_directory> <target_directory>
+photobackup.sh [--dry-run] [--mock-copy] <source_directory> <target_directory>
 ```
 
 ## Setup
@@ -13,13 +13,13 @@ The supported command is:
 Create the local virtual environment and install the media metadata dependencies:
 
 ```sh
-./setup_venv.sh
+./setup.sh
 ```
 
-The wrapper script uses `.venv/bin/python` automatically:
+The setup script also installs `photobackup.sh` into `~/.local/bin` and adds that directory to your shell profile when needed. The wrapper script uses `.venv/bin/python` automatically:
 
 ```sh
-./photobackup.sh --dry-run ./iPhone2 ./destination
+photobackup.sh --dry-run ./iPhone2 ./destination
 ```
 
 You can also run `photobackup.py` directly if your active Python environment has the required packages installed.
@@ -61,19 +61,19 @@ Destination files are handled as follows:
 `--dry-run` scans, plans, and prints the copies without creating files.
 
 ```sh
-./photobackup.sh --dry-run ./iPhone2 ./destination
+photobackup.sh --dry-run ./iPhone2 ./destination
 ```
 
 `--mock-copy` runs the full planning, disk-space check, and progress workflow, but sleeps instead of writing files.
 
 ```sh
-./photobackup.sh --mock-copy ./iPhone2 ./destination
+photobackup.sh --mock-copy ./iPhone2 ./destination
 ```
 
 Run without either flag to perform the backup:
 
 ```sh
-./photobackup.sh ./iPhone2 ./destination
+photobackup.sh ./iPhone2 ./destination
 ```
 
 ## Tests

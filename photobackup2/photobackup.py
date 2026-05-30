@@ -151,7 +151,7 @@ def check_dependencies(
                 *errors,
                 "",
                 "Run:",
-                "  ./setup_venv.sh",
+                "  ./setup.sh",
                 "",
                 "Then run:",
                 "  ./photobackup.sh [--dry-run] [--mock-copy] <source_directory> <target_directory>",

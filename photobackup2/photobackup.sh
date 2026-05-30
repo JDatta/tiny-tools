@@ -15,7 +15,8 @@ if [[ ! -x "$PYTHON" ]]; then
 Missing virtual environment: $ROOT_DIR/.venv
 
 Run:
-  ./setup_venv.sh
+  cd "$ROOT_DIR"
+  ./setup.sh
 
 Then run:
   ./photobackup.sh [--dry-run] [--mock-copy] <source_directory> <target_directory>
